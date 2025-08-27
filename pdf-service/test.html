@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste PDF Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e40af;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #1e40af;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 PDF Service - Teste</h1>
+
+        <div class="test-section">
+            <h3>1. Teste de Conectividade</h3>
+            <p>Verifica se o serviço está rodando:</p>
+            <button onclick="testHealth()">Testar Health Check</button>
+            <div id="health-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Teste do Puppeteer</h3>
+            <p>Verifica se o Puppeteer consegue inicializar:</p>
+            <button onclick="testPuppeteer()">Testar Puppeteer</button>
+            <div id="puppeteer-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Teste de PDF Simples</h3>
+            <p>Gera um PDF de teste básico:</p>
+            <button onclick="testSimplePdf()">Gerar PDF de Teste</button>
+            <div id="simple-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Status do Serviço</h3>
+            <p>Verifique se o microserviço está rodando na porta 3001:</p>
+            <p><strong>URL:</strong> http://localhost:3001</p>
+            <p><strong>Health Check:</strong> http://localhost:3001/health</p>
+            <div id="auto-status" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Como Iniciar o Serviço</h3>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4>Windows:</h4>
+                <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 3px; margin: 5px 0;">cd pdf-service
+start.bat</pre>
+
+                <h4>Manual (qualquer OS):</h4>
+                <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 3px; margin: 5px 0;">cd pdf-service
+npm install
+npm start</pre>
+
+                <h4>✅ Quando estiver funcionando, você verá:</h4>
+                <pre style="background: #065f46; color: #d1fae5; padding: 10px; border-radius: 3px; margin: 5px 0;">🚀 PDF Service running on port 3001
+📋 Health check: http://localhost:3001/health</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testando conectividade...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('http://localhost:3001/health');
+
+                // Verificar se a resposta é JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Serviço não está rodando na porta 3001. Execute: npm start');
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Sucesso: ${data.message}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Erro: ${response.status} - ${data.message || 'Erro desconhecido'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                if (error.message.includes('fetch')) {
+                    resultDiv.innerHTML = `❌ Erro de conexão: Serviço não está rodando<br>
+                        <strong>💡 Solução:</strong><br>
+                        1. Abra o terminal na pasta pdf-service<br>
+                        2. Execute: <code>npm start</code><br>
+                        3. Aguarde aparecer: "🚀 PDF Service running on port 3001"`;
+                } else {
+                    resultDiv.textContent = `❌ Erro: ${error.message}`;
+                }
+            }
+        }
+
+        async function testPuppeteer() {
+            const resultDiv = document.getElementById('puppeteer-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testando Puppeteer...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('http://localhost:3001/test-puppeteer');
+
+                // Verificar se a resposta é JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Serviço não está rodando na porta 3001. Execute: npm start');
+                }
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Puppeteer inicializado com sucesso!`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Erro: ${data.message || 'Falha na inicialização do Puppeteer'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                if (error.message.includes('fetch') || error.message.includes('3001')) {
+                    resultDiv.innerHTML = `❌ Erro de conexão: Serviço não está rodando<br>
+                        <strong>💡 Solução:</strong><br>
+                        1. Abra o terminal na pasta pdf-service<br>
+                        2. Execute: <code>npm start</code><br>
+                        3. Aguarde aparecer: "🚀 PDF Service running on port 3001"<br>
+                        4. Tente novamente`;
+                } else {
+                    resultDiv.innerHTML = `❌ Erro: ${error.message}<br>
+                        <small>Verifique o console do navegador (F12) para mais detalhes</small>`;
+                }
+            }
+        }
+
+        async function testSimplePdf() {
+            const resultDiv = document.getElementById('simple-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Gerando PDF de teste...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch('http://localhost:3001/test-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                // Verificar se a resposta é JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Serviço não está rodando na porta 3001. Execute: npm start');
+                }
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ PDF gerado com sucesso!<br>
+                        <strong>Tamanho:</strong> ${Math.round(data.pdf.length * 0.75 / 1024)} KB<br>
+                        <strong>Bytes:</strong> ${data.size || 'N/A'}<br>
+                        <button onclick="downloadTestPdf('${data.pdf}')">💾 Baixar PDF</button>`;
+                } else {
+                    resultDiv.className = 'result error';
+                    let errorMsg = `❌ Erro: ${data.message || 'Falha na geração do PDF'}`;
+
+                    if (data.details) {
+                        errorMsg += `<br><strong>Detalhes:</strong> ${data.details}`;
+                    }
+
+                    if (data.error && data.error !== data.message) {
+                        errorMsg += `<br><strong>Erro técnico:</strong> ${data.error}`;
+                    }
+
+                    resultDiv.innerHTML = errorMsg;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                if (error.message.includes('fetch') || error.message.includes('3001')) {
+                    resultDiv.innerHTML = `❌ Erro de conexão: Serviço não está rodando<br>
+                        <strong>💡 Solução:</strong><br>
+                        1. Abra o terminal na pasta pdf-service<br>
+                        2. Execute: <code>npm start</code><br>
+                        3. Aguarde aparecer: "🚀 PDF Service running on port 3001"<br>
+                        4. Tente novamente`;
+                } else {
+                    resultDiv.innerHTML = `❌ Erro: ${error.message}<br>
+                        <small>Verifique o console do navegador (F12) para mais detalhes</small>`;
+                }
+            }
+        }
+
+        function downloadTestPdf(base64Pdf) {
+            const link = document.createElement('a');
+            link.href = 'data:application/pdf;base64,' + base64Pdf;
+            link.download = 'teste-pdf-' + new Date().getTime() + '.pdf';
+            link.click();
+        }
+
+        // Verificação automática ao carregar a página
+        window.addEventListener('load', async function() {
+            const autoStatusDiv = document.getElementById('auto-status');
+            autoStatusDiv.style.display = 'block';
+            autoStatusDiv.textContent = '🔍 Verificando status do serviço...';
+            autoStatusDiv.className = 'result';
+
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                const contentType = response.headers.get('content-type');
+
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Service not running');
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    autoStatusDiv.className = 'result success';
+                    autoStatusDiv.innerHTML = `✅ Serviço rodando normalmente!<br>
+                        <strong>Status:</strong> ${data.message}<br>
+                        <em>Você pode executar os testes acima agora.</em>`;
+                } else {
+                    throw new Error('Service error');
+                }
+            } catch (error) {
+                autoStatusDiv.className = 'result error';
+                autoStatusDiv.innerHTML = `❌ Serviço NÃO está rodando<br>
+                    <strong>⚠️ IMPORTANTE:</strong> Você precisa iniciar o microserviço primeiro!<br>
+                    <em>Siga as instruções na seção "Como Iniciar o Serviço" abaixo.</em>`;
+            }
+        });
+    </script>
+</body>
+</html>

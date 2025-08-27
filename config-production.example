@@ -1,0 +1,40 @@
+# Configuração de Produção - Laravel + PDF Service
+
+# Adicione estas variáveis no seu arquivo .env de produção:
+
+# ==========================================
+# PDF SERVICE CONFIGURATION
+# ==========================================
+
+# URL do microserviço PDF (obrigatório em produção)
+PDF_SERVICE_URL=http://seu-servidor.com:3001
+
+# Exemplos de configuração:
+# PDF_SERVICE_URL=http://192.168.1.100:3001        # IP direto
+# PDF_SERVICE_URL=http://meudominio.com:3001        # Domínio personalizado
+# PDF_SERVICE_URL=https://pdf.meudominio.com        # HTTPS com subdomínio
+
+# ==========================================
+# OUTRAS CONFIGURAÇÕES IMPORTANTES
+# ==========================================
+
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=http://seu-dominio.com
+
+LOG_CHANNEL=daily
+LOG_LEVEL=info
+
+# Cache e sessões para produção
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+
+# ==========================================
+# VERIFICAÇÃO PÓS-DEPLOY
+# ==========================================
+
+# Após configurar, teste:
+# 1. curl http://SEU-SERVIDOR:3001/health
+# 2. No Laravel, gere um certificado
+# 3. Verifique os logs: tail -f storage/logs/laravel.log
