@@ -60,6 +60,11 @@ class School extends Model
         return $this->hasMany(Certificate::class);
     }
 
+    public function teachers()
+    {
+        return Teacher::whereJsonContains('schools', $this->id)->get();
+    }
+
     // Scopes
     public function scopeActive($query)
     {

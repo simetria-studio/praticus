@@ -67,6 +67,15 @@ class Teacher extends Model
         return $this->hasMany(SchoolClass::class, 'coordinator_id');
     }
 
+    public function schoolsData()
+    {
+        if (!$this->schools) {
+            return collect();
+        }
+        
+        return School::whereIn('id', $this->schools)->get();
+    }
+
     // Scopes
     public function scopeActive($query)
     {

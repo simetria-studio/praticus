@@ -18,7 +18,7 @@ class TeacherController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Teacher::with('school');
+        $query = Teacher::query();
 
         // Se for coordenador, filtrar apenas pela escola responsável
         if ($user->isCoordinator()) {
