@@ -130,11 +130,39 @@
                                                     name="period"
                                                     required>
                                                 <option value="">Selecione...</option>
-                                                @foreach($periods as $key => $period)
-                                                    <option value="{{ $key }}" {{ old('period', $note->period) == $key ? 'selected' : '' }}>
-                                                        {{ $period }}
-                                                    </option>
-                                                @endforeach
+
+                                                <!-- Notas Mensais -->
+                                                <optgroup label="Notas Mensais">
+                                                    <option value="janeiro" {{ old('period', $note->period) == 'janeiro' ? 'selected' : '' }}>Janeiro</option>
+                                                    <option value="fevereiro" {{ old('period', $note->period) == 'fevereiro' ? 'selected' : '' }}>Fevereiro</option>
+                                                    <option value="marco" {{ old('period', $note->period) == 'marco' ? 'selected' : '' }}>Março</option>
+                                                    <option value="abril" {{ old('period', $note->period) == 'abril' ? 'selected' : '' }}>Abril</option>
+                                                    <option value="maio" {{ old('period', $note->period) == 'maio' ? 'selected' : '' }}>Maio</option>
+                                                    <option value="junho" {{ old('period', $note->period) == 'junho' ? 'selected' : '' }}>Junho</option>
+                                                    <option value="julho" {{ old('period', $note->period) == 'julho' ? 'selected' : '' }}>Julho</option>
+                                                    <option value="agosto" {{ old('period', $note->period) == 'agosto' ? 'selected' : '' }}>Agosto</option>
+                                                    <option value="setembro" {{ old('period', $note->period) == 'setembro' ? 'selected' : '' }}>Setembro</option>
+                                                    <option value="outubro" {{ old('period', $note->period) == 'outubro' ? 'selected' : '' }}>Outubro</option>
+                                                    <option value="novembro" {{ old('period', $note->period) == 'novembro' ? 'selected' : '' }}>Novembro</option>
+                                                    <option value="dezembro" {{ old('period', $note->period) == 'dezembro' ? 'selected' : '' }}>Dezembro</option>
+                                                </optgroup>
+
+                                                <!-- Médias Semestrais -->
+                                                <optgroup label="Médias Semestrais">
+                                                    <option value="1_semestre" {{ old('period', $note->period) == '1_semestre' ? 'selected' : '' }}>1º Semestre</option>
+                                                    <option value="2_semestre" {{ old('period', $note->period) == '2_semestre' ? 'selected' : '' }}>2º Semestre</option>
+                                                </optgroup>
+
+                                                <!-- Recuperações -->
+                                                <optgroup label="Recuperações">
+                                                    <option value="recuperacao_1_semestre" {{ old('period', $note->period) == 'recuperacao_1_semestre' ? 'selected' : '' }}>Recuperação 1º Semestre</option>
+                                                    <option value="recuperacao_2_semestre" {{ old('period', $note->period) == 'recuperacao_2_semestre' ? 'selected' : '' }}>Recuperação 2º Semestre</option>
+                                                </optgroup>
+
+                                                <!-- Prova Final -->
+                                                <optgroup label="Avaliações Finais">
+                                                    <option value="prova_final" {{ old('period', $note->period) == 'prova_final' ? 'selected' : '' }}>Prova Final</option>
+                                                </optgroup>
                                             </select>
                                             @error('period')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -189,20 +217,6 @@
                                                    max="2030"
                                                    required>
                                             @error('school_year')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="class" class="form-label">Turma</label>
-                                            <input type="text"
-                                                   class="form-control @error('class') is-invalid @enderror"
-                                                   id="class"
-                                                   name="class"
-                                                   value="{{ old('class', $note->class) }}"
-                                                   placeholder="Ex: A, B, 1A">
-                                            @error('class')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>

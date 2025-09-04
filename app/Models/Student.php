@@ -162,8 +162,9 @@ class Student extends Model
     public function getGenderLabelAttribute()
     {
         $genders = [
-            'M' => 'Masculino',
-            'F' => 'Feminino',
+            'masculino' => 'Masculino',
+            'feminino' => 'Feminino',
+            'outro' => 'Outro',
         ];
 
         return $genders[$this->gender] ?? $this->gender;
@@ -285,11 +286,45 @@ class Student extends Model
 
     public function getGeneralAverage($schoolYear = null)
     {
-        $periods = array_keys(Note::getPeriods());
+        // Calcular média geral baseada nos semestres
+        $semester1Average = $this->getSemesterAverage('1_semestre', $schoolYear);
+        $semester2Average = $this->getSemesterAverage('2_semestre', $schoolYear);
+
+        $averages = array_filter([$semester1Average, $semester2Average], function($avg) {
+            return $avg !== null;
+        });
+
+        return !empty($averages) ? array_sum($averages) / count($averages) : null;
+    }
+
+    /**
+     * Calcular média de um semestre específico
+     */
+    public function getSemesterAverage($semester, $schoolYear = null)
+    {
+        $subjects = array_keys(Note::getSubjects());
         $averages = [];
 
-        foreach ($periods as $period) {
-            $average = $this->getPeriodAverage($period, $schoolYear);
+        foreach ($subjects as $subject) {
+            $average = Note::calculateSemesterAverage($this->id, $subject, $semester, $schoolYear);
+            if ($average !== null) {
+                $averages[] = $average;
+            }
+        }
+
+        return !empty($averages) ? array_sum($averages) / count($averages) : null;
+    }
+
+    /**
+     * Calcular média mensal de um mês específico
+     */
+    public function getMonthlyAverage($month, $schoolYear = null)
+    {
+        $subjects = array_keys(Note::getSubjects());
+        $averages = [];
+
+        foreach ($subjects as $subject) {
+            $average = $this->getSubjectAverage($subject, $month, $schoolYear);
             if ($average !== null) {
                 $averages[] = $average;
             }
@@ -300,19 +335,41 @@ class Student extends Model
 
     public function getSubjectStatus($subject, $schoolYear = null)
     {
-        $average = $this->getSubjectAverage($subject, null, $schoolYear);
-        return $average !== null && $average >= 6.0 ? 'aprovado' : 'reprovado';
+        // Calcular média geral da disciplina considerando ambos os semestres
+        $semester1Average = Note::calculateSemesterAverage($this->id, $subject, '1_semestre', $schoolYear);
+        $semester2Average = Note::calculateSemesterAverage($this->id, $subject, '2_semestre', $schoolYear);
+
+        $averages = array_filter([$semester1Average, $semester2Average], function($avg) {
+            return $avg !== null;
+        });
+
+        if (empty($averages)) {
+            return 'sem_notas';
+        }
+
+        $generalAverage = array_sum($averages) / count($averages);
+        return $generalAverage >= 6.0 ? 'aprovado' : 'reprovado';
     }
 
     public function getAcademicStatus($schoolYear = null)
     {
         $subjects = array_keys(Note::getSubjects());
         $failed = 0;
+        $subjectsWithNotes = 0;
 
         foreach ($subjects as $subject) {
-            if ($this->getSubjectStatus($subject, $schoolYear) === 'reprovado') {
+            $status = $this->getSubjectStatus($subject, $schoolYear);
+            if ($status === 'reprovado') {
                 $failed++;
             }
+            if ($status !== 'sem_notas') {
+                $subjectsWithNotes++;
+            }
+        }
+
+        // Se não há notas em nenhuma disciplina
+        if ($subjectsWithNotes === 0) {
+            return 'sem_notas';
         }
 
         if ($failed === 0) return 'aprovado';

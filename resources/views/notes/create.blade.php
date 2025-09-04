@@ -64,20 +64,42 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="school_id" class="form-label">Escola <span class="text-danger">*</span></label>
+                                            <select class="form-select @error('school_id') is-invalid @enderror" id="school_id" name="school_id" required>
+                                                <option value="">Selecione uma escola...</option>
+                                                @foreach($schools as $school)
+                                                    <option value="{{ $school->id }}" {{ old('school_id') == $school->id ? 'selected' : '' }}>
+                                                        {{ $school->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('school_id')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="class_id" class="form-label">Turma <span class="text-danger">*</span></label>
+                                            <select class="form-select @error('class_id') is-invalid @enderror" id="class_id" name="class_id" required disabled>
+                                                <option value="">Primeiro selecione uma escola</option>
+                                            </select>
+                                            @error('class_id')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <div class="mb-3">
                                             <label for="student_id" class="form-label">Aluno <span class="text-danger">*</span></label>
                                             <select class="form-select @error('student_id') is-invalid @enderror"
                                                     id="student_id"
                                                     name="student_id"
-                                                    required>
-                                                <option value="">Selecione um aluno...</option>
-                                                @foreach($students as $student)
-                                                    <option value="{{ $student->id }}"
-                                                            {{ (old('student_id') == $student->id || ($selectedStudent && $selectedStudent->id == $student->id)) ? 'selected' : '' }}>
-                                                        {{ $student->name }} - {{ $student->enrollment }}
-                                                    </option>
-                                                @endforeach
+                                                    required
+                                                    disabled>
+                                                <option value="">Primeiro selecione uma turma</option>
                                             </select>
                                             @error('student_id')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -111,11 +133,39 @@
                                                     name="period"
                                                     required>
                                                 <option value="">Selecione...</option>
-                                                @foreach($periods as $key => $period)
-                                                    <option value="{{ $key }}" {{ old('period') == $key ? 'selected' : '' }}>
-                                                        {{ $period }}
-                                                    </option>
-                                                @endforeach
+
+                                                <!-- Notas Mensais -->
+                                                <optgroup label="Notas Mensais">
+                                                    <option value="janeiro" {{ old('period') == 'janeiro' ? 'selected' : '' }}>Janeiro</option>
+                                                    <option value="fevereiro" {{ old('period') == 'fevereiro' ? 'selected' : '' }}>Fevereiro</option>
+                                                    <option value="marco" {{ old('period') == 'marco' ? 'selected' : '' }}>Março</option>
+                                                    <option value="abril" {{ old('period') == 'abril' ? 'selected' : '' }}>Abril</option>
+                                                    <option value="maio" {{ old('period') == 'maio' ? 'selected' : '' }}>Maio</option>
+                                                    <option value="junho" {{ old('period') == 'junho' ? 'selected' : '' }}>Junho</option>
+                                                    <option value="julho" {{ old('period') == 'julho' ? 'selected' : '' }}>Julho</option>
+                                                    <option value="agosto" {{ old('period') == 'agosto' ? 'selected' : '' }}>Agosto</option>
+                                                    <option value="setembro" {{ old('period') == 'setembro' ? 'selected' : '' }}>Setembro</option>
+                                                    <option value="outubro" {{ old('period') == 'outubro' ? 'selected' : '' }}>Outubro</option>
+                                                    <option value="novembro" {{ old('period') == 'novembro' ? 'selected' : '' }}>Novembro</option>
+                                                    <option value="dezembro" {{ old('period') == 'dezembro' ? 'selected' : '' }}>Dezembro</option>
+                                                </optgroup>
+
+                                                <!-- Médias Semestrais -->
+                                                <optgroup label="Médias Semestrais">
+                                                    <option value="1_semestre" {{ old('period') == '1_semestre' ? 'selected' : '' }}>1º Semestre</option>
+                                                    <option value="2_semestre" {{ old('period') == '2_semestre' ? 'selected' : '' }}>2º Semestre</option>
+                                                </optgroup>
+
+                                                <!-- Recuperações -->
+                                                <optgroup label="Recuperações">
+                                                    <option value="recuperacao_1_semestre" {{ old('period') == 'recuperacao_1_semestre' ? 'selected' : '' }}>Recuperação 1º Semestre</option>
+                                                    <option value="recuperacao_2_semestre" {{ old('period') == 'recuperacao_2_semestre' ? 'selected' : '' }}>Recuperação 2º Semestre</option>
+                                                </optgroup>
+
+                                                <!-- Prova Final -->
+                                                <optgroup label="Avaliações Finais">
+                                                    <option value="prova_final" {{ old('period') == 'prova_final' ? 'selected' : '' }}>Prova Final</option>
+                                                </optgroup>
                                             </select>
                                             @error('period')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -170,20 +220,6 @@
                                                    max="2030"
                                                    required>
                                             @error('school_year')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="class" class="form-label">Turma</label>
-                                            <input type="text"
-                                                   class="form-control @error('class') is-invalid @enderror"
-                                                   id="class"
-                                                   name="class"
-                                                   value="{{ old('class') }}"
-                                                   placeholder="Ex: A, B, 1A">
-                                            @error('class')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
@@ -322,6 +358,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const studentSelect = document.getElementById('student_id');
+    const classSelect = document.getElementById('class_id');
+    const schoolSelect = document.getElementById('school_id');
     const gradeInput = document.getElementById('grade');
     const maxGradeInput = document.getElementById('max_grade');
     const percentageInput = document.getElementById('percentage');
@@ -396,6 +435,20 @@ document.addEventListener('DOMContentLoaded', function() {
     calculatePercentageAndShowConversion();
 
     // Buscar dados do aluno quando selecionado
+    // Event listener para mudança de escola
+    document.getElementById('school_id').addEventListener('change', function() {
+        const schoolId = this.value;
+        loadClassesBySchool(schoolId);
+        studentSelect.innerHTML = '<option value="">Primeiro selecione uma turma</option>';
+        studentSelect.disabled = true;
+    });
+
+    // Event listener para mudança de turma
+    document.getElementById('class_id').addEventListener('change', function() {
+        const classId = this.value;
+        loadStudentsByClass(classId);
+    });
+
     document.getElementById('student_id').addEventListener('change', function() {
         const studentId = this.value;
         if (studentId) {
@@ -403,6 +456,58 @@ document.addEventListener('DOMContentLoaded', function() {
             // Por exemplo, turma atual, ano letivo, etc.
         }
     });
+
+    // Função para carregar turmas por escola
+    function loadClassesBySchool(schoolId) {
+        if (!schoolId) {
+            classSelect.innerHTML = '<option value="">Primeiro selecione uma escola</option>';
+            classSelect.disabled = true;
+            return;
+        }
+
+        fetch(`{{ route('notes.classes-by-school') }}?school_id=${schoolId}`)
+            .then(response => response.json())
+            .then(classes => {
+                classSelect.innerHTML = '<option value="">Selecione uma turma...</option>';
+                classes.forEach(classItem => {
+                    const option = document.createElement('option');
+                    option.value = classItem.id;
+                    option.textContent = `${classItem.name} - ${classItem.grade}º Ano (${classItem.period})`;
+                    classSelect.appendChild(option);
+                });
+                classSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Erro ao carregar turmas:', error);
+                classSelect.innerHTML = '<option value="">Erro ao carregar turmas</option>';
+            });
+    }
+
+    // Função para carregar alunos por turma
+    function loadStudentsByClass(classId) {
+        if (!classId) {
+            studentSelect.innerHTML = '<option value="">Primeiro selecione uma turma</option>';
+            studentSelect.disabled = true;
+            return;
+        }
+
+        fetch(`{{ route('notes.students-by-class') }}?class_id=${classId}`)
+            .then(response => response.json())
+            .then(students => {
+                studentSelect.innerHTML = '<option value="">Selecione um aluno...</option>';
+                students.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student.id;
+                    option.textContent = `${student.name} - ${student.enrollment}`;
+                    studentSelect.appendChild(option);
+                });
+                studentSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Erro ao carregar alunos:', error);
+                studentSelect.innerHTML = '<option value="">Erro ao carregar alunos</option>';
+            });
+    }
 
     // Formatação de números
     const numberInputs = document.querySelectorAll('input[type="number"]');

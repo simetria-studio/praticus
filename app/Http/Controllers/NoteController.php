@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Note;
 use App\Models\Student;
 use App\Models\School;
+use App\Models\SchoolClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -165,6 +166,11 @@ class NoteController extends Controller
             ? Student::where('school_id', $user->coordinator->school_id)->active()->orderBy('name')->get()
             : Student::active()->orderBy('name')->get();
 
+        // Coordenadores só veem escolas que coordenam
+        $schools = $user->isCoordinator()
+            ? collect([$user->coordinator->school])
+            : School::active()->orderBy('name')->get();
+
         $subjects = Note::getSubjects();
         $periods = Note::getPeriods();
         $evaluationTypes = Note::getEvaluationTypes();
@@ -180,7 +186,33 @@ class NoteController extends Controller
         }
 
         return view('notes.create', compact(
-            'students', 'subjects', 'periods', 'evaluationTypes', 'selectedStudent'
+            'students', 'schools', 'subjects', 'periods', 'evaluationTypes', 'selectedStudent'
+        ));
+    }
+
+    /**
+     * Show the form for creating notes in batch.
+     */
+    public function createBatch(Request $request)
+    {
+        $user = Auth::user();
+
+        // Coordenadores só veem estudantes da sua escola
+        $students = $user->isCoordinator()
+            ? Student::where('school_id', $user->coordinator->school_id)->active()->orderBy('name')->get()
+            : Student::active()->orderBy('name')->get();
+
+        // Coordenadores só veem escolas que coordenam
+        $schools = $user->isCoordinator()
+            ? collect([$user->coordinator->school])
+            : School::active()->orderBy('name')->get();
+
+        $subjects = Note::getSubjects();
+        $periods = Note::getPeriods();
+        $evaluationTypes = Note::getEvaluationTypes();
+
+        return view('notes.batch-create', compact(
+            'students', 'schools', 'subjects', 'periods', 'evaluationTypes'
         ));
     }
 
@@ -198,7 +230,6 @@ class NoteController extends Controller
             'evaluation_type' => 'required|string|max:50',
             'evaluation_date' => 'required|date',
             'school_year' => 'required|integer|min:2020|max:2030',
-            'class' => 'nullable|string|max:50',
             'weight' => 'nullable|numeric|min:0.01|max:10.00',
             'observations' => 'nullable|string|max:1000',
         ], [
@@ -250,6 +281,125 @@ class NoteController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Erro ao cadastrar nota: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Store notes in batch.
+     */
+    public function storeBatch(Request $request)
+    {
+        $validated = $request->validate([
+            'students' => 'required|array|min:1',
+            'students.*' => 'exists:students,id',
+            'subject' => 'required|string|max:100',
+            'period' => 'required|string|max:50',
+            'max_grade' => 'required|numeric|min:0.01|max:999.99',
+            'evaluation_type' => 'required|string|max:50',
+            'evaluation_date' => 'required|date',
+            'school_year' => 'required|integer|min:2020|max:2030',
+            'weight' => 'nullable|numeric|min:0.01|max:10.00',
+            'observations' => 'nullable|string|max:1000',
+            'notes' => 'required|array|min:1',
+            'notes.*.student_id' => 'required|exists:students,id',
+            'notes.*.grade' => 'required|numeric|min:0|max:999.99',
+            'notes.*.max_grade' => 'required|numeric|min:0.01|max:999.99',
+            'notes.*.weight' => 'nullable|numeric|min:0.01|max:10.00',
+            'notes.*.observations' => 'nullable|string|max:1000',
+        ], [
+            'students.required' => 'Selecione pelo menos um aluno.',
+            'students.array' => 'Selecione pelo menos um aluno.',
+            'students.min' => 'Selecione pelo menos um aluno.',
+            'students.*.exists' => 'Um dos alunos selecionados não existe.',
+            'subject.required' => 'A disciplina é obrigatória.',
+            'period.required' => 'O período é obrigatório.',
+            'max_grade.required' => 'A nota máxima é obrigatória.',
+            'max_grade.numeric' => 'A nota máxima deve ser um número.',
+            'max_grade.min' => 'A nota máxima deve ser maior que zero.',
+            'evaluation_type.required' => 'O tipo de avaliação é obrigatório.',
+            'evaluation_date.required' => 'A data da avaliação é obrigatória.',
+            'evaluation_date.date' => 'Data da avaliação inválida.',
+            'school_year.required' => 'O ano letivo é obrigatório.',
+            'school_year.integer' => 'O ano letivo deve ser um número inteiro.',
+            'weight.numeric' => 'O peso deve ser um número.',
+            'weight.min' => 'O peso deve ser maior que zero.',
+            'notes.required' => 'As notas são obrigatórias.',
+            'notes.array' => 'As notas devem ser um array.',
+            'notes.min' => 'Pelo menos uma nota deve ser informada.',
+            'notes.*.student_id.required' => 'ID do aluno é obrigatório.',
+            'notes.*.student_id.exists' => 'Aluno não encontrado.',
+            'notes.*.grade.required' => 'A nota é obrigatória.',
+            'notes.*.grade.numeric' => 'A nota deve ser um número.',
+            'notes.*.grade.min' => 'A nota não pode ser negativa.',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $createdNotes = [];
+            $errors = [];
+            $conversionMessages = [];
+
+            foreach ($validated['notes'] as $index => $noteData) {
+                try {
+                    // Verificar se o aluno está na lista de alunos selecionados
+                    if (!in_array($noteData['student_id'], $validated['students'])) {
+                        $errors[] = "Aluno ID {$noteData['student_id']} não está na lista de alunos selecionados.";
+                        continue;
+                    }
+
+                    // Conversão automática de nota se necessário
+                    $gradeConversion = $this->convertGradeIfNeeded($noteData['grade'], $validated['max_grade']);
+                    $noteData['grade'] = $gradeConversion['grade'];
+                    if ($gradeConversion['message']) {
+                        $conversionMessages[] = "Aluno ID {$noteData['student_id']}: " . $gradeConversion['message'];
+                    }
+
+                    // Preparar dados da nota
+                    $noteRecord = [
+                        'student_id' => $noteData['student_id'],
+                        'subject' => $validated['subject'],
+                        'period' => $validated['period'],
+                        'grade' => $noteData['grade'],
+                        'max_grade' => $noteData['max_grade'] ?? $validated['max_grade'],
+                        'evaluation_type' => $validated['evaluation_type'],
+                        'evaluation_date' => $validated['evaluation_date'],
+                        'school_year' => $validated['school_year'],
+                        'weight' => $noteData['weight'] ?? $validated['weight'] ?? 1.00,
+                        'observations' => $noteData['observations'] ?? $validated['observations'],
+                        'status' => 'ativa',
+                        'created_by' => Auth::user()->name ?? 'Sistema',
+                    ];
+
+                    $note = Note::create($noteRecord);
+                    $createdNotes[] = $note;
+
+                } catch (\Exception $e) {
+                    $errors[] = "Erro ao criar nota para aluno ID {$noteData['student_id']}: " . $e->getMessage();
+                }
+            }
+
+            DB::commit();
+
+            $successMessage = count($createdNotes) . ' nota(s) cadastrada(s) com sucesso!';
+
+            if (!empty($conversionMessages)) {
+                $successMessage .= ' Conversões: ' . implode('; ', $conversionMessages);
+            }
+
+            if (!empty($errors)) {
+                $successMessage .= ' Erros: ' . implode('; ', $errors);
+            }
+
+            return redirect()->route('notes.index')
+                ->with('success', $successMessage);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erro ao cadastrar notas em lote: ' . $e->getMessage());
         }
     }
 
@@ -311,7 +461,6 @@ class NoteController extends Controller
             'evaluation_type' => 'required|string|max:50',
             'evaluation_date' => 'required|date',
             'school_year' => 'required|integer|min:2020|max:2030',
-            'class' => 'nullable|string|max:50',
             'weight' => 'nullable|numeric|min:0.01|max:10.00',
             'observations' => 'nullable|string|max:1000',
             'status' => 'required|in:ativa,cancelada,corrigida',
@@ -616,6 +765,44 @@ class NoteController extends Controller
             ->orWhere('enrollment', 'like', "%{$search}%")
             ->active()
             ->limit(10)
+            ->get(['id', 'name', 'enrollment']);
+
+        return response()->json($students);
+    }
+
+    /**
+     * Buscar turmas por escola via AJAX
+     */
+    public function getClassesBySchool(Request $request)
+    {
+        $schoolId = $request->get('school_id');
+
+        if (!$schoolId) {
+            return response()->json([]);
+        }
+
+        $classes = SchoolClass::where('school_id', $schoolId)
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'grade', 'period']);
+
+        return response()->json($classes);
+    }
+
+    /**
+     * Buscar alunos por turma via AJAX
+     */
+    public function getStudentsByClass(Request $request)
+    {
+        $classId = $request->get('class_id');
+
+        if (!$classId) {
+            return response()->json([]);
+        }
+
+        $students = Student::where('class_id', $classId)
+            ->active()
+            ->orderBy('name')
             ->get(['id', 'name', 'enrollment']);
 
         return response()->json($students);

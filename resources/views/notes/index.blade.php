@@ -24,6 +24,10 @@
                                 <i class="fas fa-plus me-1"></i>
                                 Nova Nota
                             </a>
+                            <a href="{{ route('notes.batch.create') }}" class="btn btn-success btn-sm">
+                                <i class="fas fa-layer-group me-1"></i>
+                                Lançamento em Lote
+                            </a>
                         </div>
                     </div>
                 </div>

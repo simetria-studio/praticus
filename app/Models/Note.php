@@ -233,15 +233,32 @@ class Note extends Model
     public static function getPeriods()
     {
         return [
-            '1_bimestre' => '1º Bimestre',
-            '2_bimestre' => '2º Bimestre',
-            '3_bimestre' => '3º Bimestre',
-            '4_bimestre' => '4º Bimestre',
-            '1_trimestre' => '1º Trimestre',
-            '2_trimestre' => '2º Trimestre',
-            '3_trimestre' => '3º Trimestre',
+            // Notas mensais
+            'janeiro' => 'Janeiro',
+            'fevereiro' => 'Fevereiro',
+            'marco' => 'Março',
+            'abril' => 'Abril',
+            'maio' => 'Maio',
+            'junho' => 'Junho',
+            'julho' => 'Julho',
+            'agosto' => 'Agosto',
+            'setembro' => 'Setembro',
+            'outubro' => 'Outubro',
+            'novembro' => 'Novembro',
+            'dezembro' => 'Dezembro',
+
+            // Médias semestrais
             '1_semestre' => '1º Semestre',
             '2_semestre' => '2º Semestre',
+
+            // Recuperações
+            'recuperacao_1_semestre' => 'Recuperação 1º Semestre',
+            'recuperacao_2_semestre' => 'Recuperação 2º Semestre',
+
+            // Prova final
+            'prova_final' => 'Prova Final',
+
+            // Anual
             'anual' => 'Anual',
         ];
     }
@@ -258,5 +275,89 @@ class Note extends Model
             'apresentacao' => 'Apresentação',
             'recuperacao' => 'Recuperação',
         ];
+    }
+
+    /**
+     * Obter meses de um semestre
+     */
+    public static function getMonthsBySemester($semester)
+    {
+        $months = [
+            '1_semestre' => ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho'],
+            '2_semestre' => ['julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+        ];
+
+        return $months[$semester] ?? [];
+    }
+
+    /**
+     * Verificar se um período é mensal
+     */
+    public static function isMonthlyPeriod($period)
+    {
+        $monthlyPeriods = [
+            'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
+            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+        ];
+
+        return in_array($period, $monthlyPeriods);
+    }
+
+    /**
+     * Verificar se um período é semestral
+     */
+    public static function isSemesterPeriod($period)
+    {
+        return in_array($period, ['1_semestre', '2_semestre']);
+    }
+
+    /**
+     * Verificar se um período é de recuperação
+     */
+    public static function isRecoveryPeriod($period)
+    {
+        return in_array($period, ['recuperacao_1_semestre', 'recuperacao_2_semestre']);
+    }
+
+    /**
+     * Verificar se um período é prova final
+     */
+    public static function isFinalExamPeriod($period)
+    {
+        return $period === 'prova_final';
+    }
+
+    /**
+     * Calcular média semestral baseada nas notas mensais
+     */
+    public static function calculateSemesterAverage($studentId, $subject, $semester, $schoolYear = null)
+    {
+        $months = self::getMonthsBySemester($semester);
+
+        if (empty($months)) {
+            return null;
+        }
+
+        $query = static::byStudent($studentId)
+            ->bySubject($subject)
+            ->active();
+
+        if ($schoolYear) {
+            $query->bySchoolYear($schoolYear);
+        }
+
+        $notes = $query->whereIn('period', $months)->get();
+
+        if ($notes->isEmpty()) {
+            return null;
+        }
+
+        // Cálculo de média ponderada
+        $totalWeight = $notes->sum('weight');
+        $weightedSum = $notes->sum(function ($note) {
+            return $note->grade * $note->weight;
+        });
+
+        return $totalWeight > 0 ? $weightedSum / $totalWeight : 0;
     }
 }

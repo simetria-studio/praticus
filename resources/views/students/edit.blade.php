@@ -119,8 +119,9 @@
                                         <label for="gender" class="form-label">Sexo</label>
                                         <select class="form-select" id="gender" name="gender">
                                             <option value="">Selecione</option>
-                                            <option value="M" {{ old('gender', $student->gender) == 'M' ? 'selected' : '' }}>Masculino</option>
-                                            <option value="F" {{ old('gender', $student->gender) == 'F' ? 'selected' : '' }}>Feminino</option>
+                                            <option value="masculino" {{ old('gender', $student->gender) == 'masculino' ? 'selected' : '' }}>Masculino</option>
+                                            <option value="feminino" {{ old('gender', $student->gender) == 'feminino' ? 'selected' : '' }}>Feminino</option>
+                                            <option value="outro" {{ old('gender', $student->gender) == 'outro' ? 'selected' : '' }}>Outro</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -180,7 +181,7 @@
                                 </div>
 
                                 <div class="row mt-3">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label for="class_id" class="form-label">Turma (selecionar)</label>
                                         <select class="form-select" id="class_id" name="class_id">
                                             <option value="">Sem turma</option>
@@ -193,7 +194,7 @@
                                             @endisset
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label for="class" class="form-label">Turma</label>
                                         <input type="text"
                                                class="form-control"
@@ -202,7 +203,7 @@
                                                value="{{ old('class', $student->class) }}"
                                                placeholder="Ex: A, B, C">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label for="school_year" class="form-label">Ano Letivo</label>
                                         <input type="number"
                                                class="form-control"
@@ -211,6 +212,25 @@
                                                value="{{ old('school_year', $student->school_year) }}"
                                                min="2020"
                                                max="2030">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                            <select class="form-select @error('status') is-invalid @enderror"
+                                                    id="status"
+                                                    name="status"
+                                                    required>
+                                                <option value="">Selecione...</option>
+                                                <option value="ativo" {{ old('status', $student->status) == 'ativo' ? 'selected' : '' }}>Ativo</option>
+                                                <option value="inativo" {{ old('status', $student->status) == 'inativo' ? 'selected' : '' }}>Inativo</option>
+                                                <option value="transferido" {{ old('status', $student->status) == 'transferido' ? 'selected' : '' }}>Transferido</option>
+                                                <option value="formado" {{ old('status', $student->status) == 'formado' ? 'selected' : '' }}>Formado</option>
+                                                <option value="evadido" {{ old('status', $student->status) == 'evadido' ? 'selected' : '' }}>Evadido</option>
+                                            </select>
+                                            @error('status')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
                                     </div>
                                 </div>
                             </div>
