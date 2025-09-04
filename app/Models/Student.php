@@ -298,7 +298,7 @@ class Student extends Model
     }
 
     /**
-     * Calcular média de um semestre específico
+     * Calcular média de um semestre específico (com recuperação automática)
      */
     public function getSemesterAverage($semester, $schoolYear = null)
     {
@@ -306,7 +306,7 @@ class Student extends Model
         $averages = [];
 
         foreach ($subjects as $subject) {
-            $average = Note::calculateSemesterAverage($this->id, $subject, $semester, $schoolYear);
+            $average = Note::calculateSemesterAverageWithRecovery($this->id, $subject, $semester, $schoolYear);
             if ($average !== null) {
                 $averages[] = $average;
             }
@@ -335,9 +335,9 @@ class Student extends Model
 
     public function getSubjectStatus($subject, $schoolYear = null)
     {
-        // Calcular média geral da disciplina considerando ambos os semestres
-        $semester1Average = Note::calculateSemesterAverage($this->id, $subject, '1_semestre', $schoolYear);
-        $semester2Average = Note::calculateSemesterAverage($this->id, $subject, '2_semestre', $schoolYear);
+        // Calcular média geral da disciplina considerando ambos os semestres (com recuperação automática)
+        $semester1Average = Note::calculateSemesterAverageWithRecovery($this->id, $subject, '1_semestre', $schoolYear);
+        $semester2Average = Note::calculateSemesterAverageWithRecovery($this->id, $subject, '2_semestre', $schoolYear);
 
         $averages = array_filter([$semester1Average, $semester2Average], function($avg) {
             return $avg !== null;

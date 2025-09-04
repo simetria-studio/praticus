@@ -131,26 +131,20 @@
                                                     required>
                                                 <option value="">Selecione...</option>
 
-                                                <!-- Notas Mensais -->
-                                                <optgroup label="Notas Mensais">
-                                                    <option value="janeiro" {{ old('period', $note->period) == 'janeiro' ? 'selected' : '' }}>Janeiro</option>
-                                                    <option value="fevereiro" {{ old('period', $note->period) == 'fevereiro' ? 'selected' : '' }}>Fevereiro</option>
-                                                    <option value="marco" {{ old('period', $note->period) == 'marco' ? 'selected' : '' }}>Março</option>
-                                                    <option value="abril" {{ old('period', $note->period) == 'abril' ? 'selected' : '' }}>Abril</option>
-                                                    <option value="maio" {{ old('period', $note->period) == 'maio' ? 'selected' : '' }}>Maio</option>
-                                                    <option value="junho" {{ old('period', $note->period) == 'junho' ? 'selected' : '' }}>Junho</option>
-                                                    <option value="julho" {{ old('period', $note->period) == 'julho' ? 'selected' : '' }}>Julho</option>
-                                                    <option value="agosto" {{ old('period', $note->period) == 'agosto' ? 'selected' : '' }}>Agosto</option>
-                                                    <option value="setembro" {{ old('period', $note->period) == 'setembro' ? 'selected' : '' }}>Setembro</option>
-                                                    <option value="outubro" {{ old('period', $note->period) == 'outubro' ? 'selected' : '' }}>Outubro</option>
-                                                    <option value="novembro" {{ old('period', $note->period) == 'novembro' ? 'selected' : '' }}>Novembro</option>
-                                                    <option value="dezembro" {{ old('period', $note->period) == 'dezembro' ? 'selected' : '' }}>Dezembro</option>
+                                                <!-- Avaliações do 1º Semestre -->
+                                                <optgroup label="1º Semestre">
+                                                    <option value="1_ava" {{ old('period', $note->period) == '1_ava' ? 'selected' : '' }}>1ª AVA</option>
+                                                    <option value="2_ava" {{ old('period', $note->period) == '2_ava' ? 'selected' : '' }}>2ª AVA</option>
+                                                    <option value="3_ava" {{ old('period', $note->period) == '3_ava' ? 'selected' : '' }}>3ª AVA</option>
+                                                    <option value="4_ava" {{ old('period', $note->period) == '4_ava' ? 'selected' : '' }}>4ª AVA</option>
                                                 </optgroup>
 
-                                                <!-- Médias Semestrais -->
-                                                <optgroup label="Médias Semestrais">
-                                                    <option value="1_semestre" {{ old('period', $note->period) == '1_semestre' ? 'selected' : '' }}>1º Semestre</option>
-                                                    <option value="2_semestre" {{ old('period', $note->period) == '2_semestre' ? 'selected' : '' }}>2º Semestre</option>
+                                                <!-- Avaliações do 2º Semestre -->
+                                                <optgroup label="2º Semestre">
+                                                    <option value="5_ava" {{ old('period', $note->period) == '5_ava' ? 'selected' : '' }}>5ª AVA</option>
+                                                    <option value="6_ava" {{ old('period', $note->period) == '6_ava' ? 'selected' : '' }}>6ª AVA</option>
+                                                    <option value="7_ava" {{ old('period', $note->period) == '7_ava' ? 'selected' : '' }}>7ª AVA</option>
+                                                    <option value="8_ava" {{ old('period', $note->period) == '8_ava' ? 'selected' : '' }}>8ª AVA</option>
                                                 </optgroup>
 
                                                 <!-- Recuperações -->

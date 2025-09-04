@@ -6,6 +6,7 @@ use App\Models\Note;
 use App\Models\Student;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Events\RecoveryNoteCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -265,6 +266,11 @@ class NoteController extends Controller
 
             $note = Note::create($validated);
 
+            // Disparar evento se for uma nota de recuperação
+            if (in_array($note->period, ['recuperacao_1_semestre', 'recuperacao_2_semestre'])) {
+                event(new RecoveryNoteCreated($note));
+            }
+
             DB::commit();
 
             $successMessage = 'Nota cadastrada com sucesso!';
@@ -373,6 +379,11 @@ class NoteController extends Controller
 
                     $note = Note::create($noteRecord);
                     $createdNotes[] = $note;
+
+                    // Disparar evento se for uma nota de recuperação
+                    if (in_array($note->period, ['recuperacao_1_semestre', 'recuperacao_2_semestre'])) {
+                        event(new RecoveryNoteCreated($note));
+                    }
 
                 } catch (\Exception $e) {
                     $errors[] = "Erro ao criar nota para aluno ID {$noteData['student_id']}: " . $e->getMessage();

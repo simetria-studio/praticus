@@ -126,6 +126,7 @@ class Note extends Model
             'exercicio' => 'Exercício',
             'apresentacao' => 'Apresentação',
             'recuperacao' => 'Recuperação',
+            'media_semestral' => 'Média Semestral',
         ];
 
         return $labels[$this->evaluation_type] ?? ucfirst($this->evaluation_type);
@@ -233,23 +234,17 @@ class Note extends Model
     public static function getPeriods()
     {
         return [
-            // Notas mensais
-            'janeiro' => 'Janeiro',
-            'fevereiro' => 'Fevereiro',
-            'marco' => 'Março',
-            'abril' => 'Abril',
-            'maio' => 'Maio',
-            'junho' => 'Junho',
-            'julho' => 'Julho',
-            'agosto' => 'Agosto',
-            'setembro' => 'Setembro',
-            'outubro' => 'Outubro',
-            'novembro' => 'Novembro',
-            'dezembro' => 'Dezembro',
+            // Avaliações do 1º Semestre
+            '1_ava' => '1ª AVA',
+            '2_ava' => '2ª AVA',
+            '3_ava' => '3ª AVA',
+            '4_ava' => '4ª AVA',
 
-            // Médias semestrais
-            '1_semestre' => '1º Semestre',
-            '2_semestre' => '2º Semestre',
+            // Avaliações do 2º Semestre
+            '5_ava' => '5ª AVA',
+            '6_ava' => '6ª AVA',
+            '7_ava' => '7ª AVA',
+            '8_ava' => '8ª AVA',
 
             // Recuperações
             'recuperacao_1_semestre' => 'Recuperação 1º Semestre',
@@ -257,9 +252,6 @@ class Note extends Model
 
             // Prova final
             'prova_final' => 'Prova Final',
-
-            // Anual
-            'anual' => 'Anual',
         ];
     }
 
@@ -274,33 +266,34 @@ class Note extends Model
             'exercicio' => 'Exercício',
             'apresentacao' => 'Apresentação',
             'recuperacao' => 'Recuperação',
+            'media_semestral' => 'Média Semestral',
         ];
     }
 
     /**
-     * Obter meses de um semestre
+     * Obter avaliações de um semestre
      */
-    public static function getMonthsBySemester($semester)
+    public static function getEvaluationsBySemester($semester)
     {
-        $months = [
-            '1_semestre' => ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho'],
-            '2_semestre' => ['julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+        $evaluations = [
+            '1_semestre' => ['1_ava', '2_ava', '3_ava', '4_ava'],
+            '2_semestre' => ['5_ava', '6_ava', '7_ava', '8_ava'],
         ];
 
-        return $months[$semester] ?? [];
+        return $evaluations[$semester] ?? [];
     }
 
     /**
-     * Verificar se um período é mensal
+     * Verificar se um período é de avaliação
      */
-    public static function isMonthlyPeriod($period)
+    public static function isEvaluationPeriod($period)
     {
-        $monthlyPeriods = [
-            'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
-            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+        $evaluationPeriods = [
+            '1_ava', '2_ava', '3_ava', '4_ava',
+            '5_ava', '6_ava', '7_ava', '8_ava'
         ];
 
-        return in_array($period, $monthlyPeriods);
+        return in_array($period, $evaluationPeriods);
     }
 
     /**
@@ -328,13 +321,13 @@ class Note extends Model
     }
 
     /**
-     * Calcular média semestral baseada nas notas mensais
+     * Calcular média semestral baseada nas avaliações
      */
     public static function calculateSemesterAverage($studentId, $subject, $semester, $schoolYear = null)
     {
-        $months = self::getMonthsBySemester($semester);
+        $evaluations = self::getEvaluationsBySemester($semester);
 
-        if (empty($months)) {
+        if (empty($evaluations)) {
             return null;
         }
 
@@ -346,7 +339,7 @@ class Note extends Model
             $query->bySchoolYear($schoolYear);
         }
 
-        $notes = $query->whereIn('period', $months)->get();
+        $notes = $query->whereIn('period', $evaluations)->get();
 
         if ($notes->isEmpty()) {
             return null;
@@ -357,6 +350,77 @@ class Note extends Model
         $weightedSum = $notes->sum(function ($note) {
             return $note->grade * $note->weight;
         });
+
+        return $totalWeight > 0 ? $weightedSum / $totalWeight : 0;
+    }
+
+    /**
+     * Calcular média com recuperação (substitui a menor nota)
+     */
+    public static function calculateSemesterAverageWithRecovery($studentId, $subject, $semester, $schoolYear = null)
+    {
+        $evaluations = self::getEvaluationsBySemester($semester);
+
+        if (empty($evaluations)) {
+            return null;
+        }
+
+        $query = static::byStudent($studentId)
+            ->bySubject($subject)
+            ->active();
+
+        if ($schoolYear) {
+            $query->bySchoolYear($schoolYear);
+        }
+
+        // Buscar notas das avaliações
+        $evaluationNotes = $query->whereIn('period', $evaluations)->get();
+
+        // Buscar nota de recuperação
+        $recoveryPeriod = $semester === '1_semestre' ? 'recuperacao_1_semestre' : 'recuperacao_2_semestre';
+        $recoveryNote = $query->where('period', $recoveryPeriod)->first();
+
+        if ($evaluationNotes->isEmpty()) {
+            return null;
+        }
+
+        // Se não há recuperação, calcular média normal
+        if (!$recoveryNote) {
+            $totalWeight = $evaluationNotes->sum('weight');
+            $weightedSum = $evaluationNotes->sum(function ($note) {
+                return $note->grade * $note->weight;
+            });
+            return $totalWeight > 0 ? $weightedSum / $totalWeight : 0;
+        }
+
+        // Com recuperação: substituir a menor nota
+        $allNotes = $evaluationNotes->toArray();
+
+        // Encontrar a menor nota (considerando peso)
+        $minNote = null;
+        $minIndex = -1;
+        $minWeightedGrade = PHP_FLOAT_MAX;
+
+        foreach ($allNotes as $index => $note) {
+            $weightedGrade = $note['grade'] * $note['weight'];
+            if ($weightedGrade < $minWeightedGrade) {
+                $minWeightedGrade = $weightedGrade;
+                $minNote = $note;
+                $minIndex = $index;
+            }
+        }
+
+        // Substituir a menor nota pela recuperação
+        if ($minIndex >= 0) {
+            $allNotes[$minIndex]['grade'] = $recoveryNote->grade;
+            $allNotes[$minIndex]['weight'] = $recoveryNote->weight;
+        }
+
+        // Calcular nova média
+        $totalWeight = array_sum(array_column($allNotes, 'weight'));
+        $weightedSum = array_sum(array_map(function ($note) {
+            return $note['grade'] * $note['weight'];
+        }, $allNotes));
 
         return $totalWeight > 0 ? $weightedSum / $totalWeight : 0;
     }
