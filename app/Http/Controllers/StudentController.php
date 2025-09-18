@@ -351,4 +351,197 @@ class StudentController extends Controller
 
         return response()->json($classes);
     }
+
+    /**
+     * Exibir boletim de avaliações do aluno
+     */
+    public function reportCard(Student $student, Request $request)
+    {
+        try {
+            $schoolYear = $request->get('year', date('Y'));
+
+            // Buscar todas as notas do aluno para o ano letivo
+            $notes = $student->notes()
+                ->where('school_year', $schoolYear)
+                ->where('status', 'ativa')
+                ->orderBy('subject')
+                ->orderBy('period')
+                ->get();
+
+            // Organizar notas por disciplina e período
+            $reportData = $this->organizeReportData($notes, $schoolYear);
+
+            // Debug: verificar se há dados
+            if (empty($reportData)) {
+                return view('students.report-card', compact('student', 'reportData', 'schoolYear'))
+                    ->with('info', 'Nenhuma nota encontrada para este ano letivo.');
+            }
+
+            // Debug: adicionar timestamp para forçar reload
+            $debugInfo = [
+                'timestamp' => now()->format('Y-m-d H:i:s'),
+                'notes_count' => $notes->count(),
+                'report_data_count' => count($reportData)
+            ];
+
+            return view('students.report-card', compact('student', 'reportData', 'schoolYear', 'debugInfo'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao carregar boletim: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Gerar PDF do boletim de avaliações
+     */
+    public function reportCardPdf(Student $student, Request $request)
+    {
+        $schoolYear = $request->get('year', date('Y'));
+
+        // Buscar todas as notas do aluno para o ano letivo
+        $notes = $student->notes()
+            ->where('school_year', $schoolYear)
+            ->where('status', 'ativa')
+            ->orderBy('subject')
+            ->orderBy('period')
+            ->get();
+
+        // Organizar notas por disciplina e período
+        $reportData = $this->organizeReportData($notes, $schoolYear);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('students.report-card-pdf', compact('student', 'reportData', 'schoolYear'));
+        $pdf->setPaper('A4', 'landscape');
+
+        return $pdf->download("boletim-{$student->name}-{$schoolYear}.pdf");
+    }
+
+    /**
+     * Organizar dados do boletim
+     */
+    private function organizeReportData($notes, $schoolYear)
+    {
+        try {
+            $subjects = \App\Models\Note::getSubjects();
+            $reportData = [];
+
+            foreach ($subjects as $subjectKey => $subjectName) {
+                $subjectNotes = $notes->where('subject', $subjectKey);
+
+                if ($subjectNotes->isEmpty()) {
+                    continue; // Pular disciplinas sem notas
+                }
+
+                $data = [
+                    'subject' => $subjectName,
+                    'subject_key' => $subjectKey,
+                    'semester1' => $this->getSemesterData($subjectNotes, '1_semestre'),
+                    'semester2' => $this->getSemesterData($subjectNotes, '2_semestre'),
+                    'final_average' => $this->calculateFinalAverage($subjectNotes, $schoolYear),
+                    'final_exam' => $this->getFinalExamGrade($subjectNotes),
+                    'overall_average' => $this->calculateOverallAverage($subjectNotes, $schoolYear)
+                ];
+
+                $reportData[] = $data;
+            }
+
+            return $reportData;
+        } catch (\Exception $e) {
+            // Retornar dados vazios em caso de erro
+            return [];
+        }
+    }
+
+    /**
+     * Obter dados de um semestre específico
+     */
+    private function getSemesterData($notes, $semester)
+    {
+        $evaluations = [];
+        $recovery = null;
+        $semesterAverage = null;
+
+        // Buscar avaliações do semestre
+        $evaluationPeriods = $semester === '1_semestre'
+            ? ['1_ava', '2_ava', '3_ava', '4_ava']
+            : ['5_ava', '6_ava', '7_ava', '8_ava'];
+
+        foreach ($evaluationPeriods as $period) {
+            $note = $notes->where('period', $period)->first();
+            $evaluations[] = $note ? $note->grade : 0.0;
+        }
+
+        // Buscar recuperação
+        $recoveryPeriod = $semester === '1_semestre' ? 'recuperacao_1_semestre' : 'recuperacao_2_semestre';
+        $recoveryNote = $notes->where('period', $recoveryPeriod)->first();
+        $recovery = $recoveryNote ? $recoveryNote->grade : null;
+
+        // Calcular média semestral
+        $semesterAverage = \App\Models\Note::calculateSemesterAverageWithRecovery(
+            $notes->first()->student_id,
+            $notes->first()->subject,
+            $semester,
+            $notes->first()->school_year
+        );
+
+        return [
+            'evaluations' => $evaluations,
+            'recovery' => $recovery,
+            'average' => $semesterAverage ? round($semesterAverage, 1) : 0.0,
+            'points' => array_sum($evaluations)
+        ];
+    }
+
+    /**
+     * Calcular média final da disciplina
+     */
+    private function calculateFinalAverage($notes, $schoolYear)
+    {
+        $semester1 = \App\Models\Note::calculateSemesterAverageWithRecovery(
+            $notes->first()->student_id,
+            $notes->first()->subject,
+            '1_semestre',
+            $schoolYear
+        );
+
+        $semester2 = \App\Models\Note::calculateSemesterAverageWithRecovery(
+            $notes->first()->student_id,
+            $notes->first()->subject,
+            '2_semestre',
+            $schoolYear
+        );
+
+        if ($semester1 === null && $semester2 === null) {
+            return 0.0;
+        }
+
+        $averages = array_filter([$semester1, $semester2], function($avg) {
+            return $avg !== null;
+        });
+
+        return !empty($averages) ? round(array_sum($averages) / count($averages), 1) : 0.0;
+    }
+
+    /**
+     * Obter nota da prova final
+     */
+    private function getFinalExamGrade($notes)
+    {
+        $finalExam = $notes->where('period', 'prova_final')->first();
+        return $finalExam ? $finalExam->grade : null;
+    }
+
+    /**
+     * Calcular média geral final
+     */
+    private function calculateOverallAverage($notes, $schoolYear)
+    {
+        $finalAverage = $this->calculateFinalAverage($notes, $schoolYear);
+        $finalExam = $this->getFinalExamGrade($notes);
+
+        if ($finalExam !== null) {
+            // Se há prova final, calcular média ponderada (70% média + 30% prova final)
+            return round(($finalAverage * 0.7) + ($finalExam * 0.3), 1);
+        }
+
+        return $finalAverage;
+    }
 }

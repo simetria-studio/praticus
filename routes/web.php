@@ -87,8 +87,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/notes/batch/create', [NoteController::class, 'createBatch'])->name('notes.batch.create');
     Route::post('/notes/batch/store', [NoteController::class, 'storeBatch'])->name('notes.batch.store');
     Route::get('/api/students/search', [NoteController::class, 'searchStudents'])->name('notes.search-students');
-    Route::get('/api/classes/by-school', [NoteController::class, 'getClassesBySchool'])->name('notes.classes-by-school');
-    Route::get('/api/students/by-class', [NoteController::class, 'getStudentsByClass'])->name('notes.students-by-class');
+Route::get('/api/classes/by-school', [NoteController::class, 'getClassesBySchool'])->name('notes.classes-by-school');
+Route::get('/api/students/by-class', [NoteController::class, 'getStudentsByClass'])->name('notes.students-by-class');
+
+// Boletim de avaliações
+Route::get('/students/{student}/report-card', [StudentController::class, 'reportCard'])->name('students.report-card');
+Route::get('/students/{student}/report-card/pdf', [StudentController::class, 'reportCardPdf'])->name('students.report-card-pdf');
 
     // Rotas para histórico escolar
     Route::get('/historical-reports', [NoteController::class, 'historicalIndex'])->name('historical-reports.index');

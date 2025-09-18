@@ -36,9 +36,9 @@
                                     <i class="fas fa-file-pdf"></i>
                                 </a>
                             </div>
-                            <a href="{{ route('notes.student-report', $student) }}" class="btn btn-success btn-sm">
-                                <i class="fas fa-chart-bar me-1"></i>
-                                Boletim
+                            <a href="{{ route('students.report-card', $student) }}" class="btn btn-success btn-sm">
+                                <i class="fas fa-file-alt me-1"></i>
+                                Boletim de Avaliações
                             </a>
                             <a href="{{ route('students.edit', $student) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit me-1"></i>

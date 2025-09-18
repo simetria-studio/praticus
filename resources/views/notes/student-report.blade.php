@@ -51,25 +51,25 @@
                 </div>
 
                 <div class="card-body">
-                    <!-- Informações do Aluno e Filtro de Ano -->
+                    <!-- Informações do Aluno -->
                     <div class="row mb-4">
                         <div class="col-md-8">
                             <div class="card">
                                 <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-user me-2"></i>
+                                        Informações do Aluno
+                                    </h5>
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <h5 class="text-primary">{{ $student->name }}</h5>
-                                            <p class="mb-1"><strong>Matrícula:</strong> {{ $student->enrollment }}</p>
-                                            <p class="mb-1"><strong>Série/Turma:</strong> {{ $student->grade_with_class }}</p>
-                                            <p class="mb-0"><strong>Escola:</strong> {{ $student->school->name }}</p>
+                                            <p class="mb-1"><strong>Nome:</strong> {{ $student->name }}</p>
+                                            <p class="mb-1"><strong>Matrícula:</strong> {{ $student->registration }}</p>
+                                            <p class="mb-1"><strong>Data de Nascimento:</strong> {{ $student->birth_date ? $student->birth_date->format('d/m/Y') : '-' }}</p>
                                         </div>
                                         <div class="col-md-6">
-                                            <p class="mb-1"><strong>Data de Nascimento:</strong> {{ $student->birth_date->format('d/m/Y') }}</p>
-                                            <p class="mb-1"><strong>Idade:</strong> {{ $student->age }} anos</p>
-                                            <p class="mb-1"><strong>Status:</strong>
-                                                <span class="badge {{ $student->status_badge_class }}">{{ $student->status_label }}</span>
-                                            </p>
-                                            <p class="mb-0"><strong>Ano Letivo:</strong> {{ $schoolYear }}</p>
+                                            <p class="mb-1"><strong>Escola:</strong> {{ $student->school->name ?? '-' }}</p>
+                                            <p class="mb-1"><strong>Turma:</strong> {{ $student->schoolClass->name ?? '-' }}</p>
+                                            <p class="mb-1"><strong>Ano Letivo:</strong> {{ $schoolYear }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -77,26 +77,12 @@
                         </div>
                         <div class="col-md-4">
                             <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">Desempenho Geral</h6>
-                                </div>
                                 <div class="card-body text-center">
-                                    <div class="mb-3">
-                                        <span class="display-4 fw-bold text-{{ $generalAverage >= 6 ? 'success' : ($generalAverage >= 4 ? 'warning' : 'danger') }}">
-                                            {{ number_format($generalAverage, 1, ',', '.') }}
-                                        </span>
-                                        <p class="text-muted mb-0">Média Geral</p>
-                                    </div>
-                                    <div class="progress mb-2" style="height: 10px;">
-                                        <div class="progress-bar bg-{{ $generalAverage >= 6 ? 'success' : ($generalAverage >= 4 ? 'warning' : 'danger') }}"
-                                             role="progressbar"
-                                             style="width: {{ min($generalAverage * 10, 100) }}%"
-                                             aria-valuenow="{{ $generalAverage }}"
-                                             aria-valuemin="0"
-                                             aria-valuemax="10">
-                                        </div>
-                                    </div>
-                                    <small class="text-muted">Status: {{ ucfirst($academicStatus) }}</small>
+                                    <h5 class="card-title">Média Geral</h5>
+                                    <h2 class="text-{{ $generalAverage >= 6 ? 'success' : ($generalAverage >= 4 ? 'warning' : 'danger') }}">
+                                        {{ number_format($generalAverage, 1, ',', '.') }}
+                                    </h2>
+                                    <p class="text-muted mb-0">Ano {{ $schoolYear }}</p>
                                 </div>
                             </div>
                         </div>
@@ -144,132 +130,176 @@
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-bordered table-hover">
+                                <table class="table table-bordered mb-0" style="font-size: 12px;">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th style="width: 200px;">Disciplina</th>
-                                            @foreach($periods as $periodKey => $periodName)
-                                                <th class="text-center" style="min-width: 120px;">{{ $periodName }}</th>
-                                            @endforeach
-                                            <th class="text-center" style="width: 100px;">Média</th>
-                                            <th class="text-center" style="width: 100px;">Situação</th>
+                                            <th rowspan="3" class="text-center align-middle" style="width: 200px;">
+                                                COMPONENTES CURRICULARES
+                                            </th>
+
+                                            <!-- 1º SEMESTRE -->
+                                            <th colspan="6" class="text-center">
+                                                BOLETIM DE AVALIAÇÕES - 1º SEMESTRE
+                                            </th>
+
+                                            <!-- 2º SEMESTRE -->
+                                            <th colspan="6" class="text-center">
+                                                BOLETIM DE AVALIAÇÕES - 2º SEMESTRE
+                                            </th>
+
+                                            <!-- COLUNAS FINAIS -->
+                                            <th colspan="4" class="text-center">
+                                                RESULTADO FINAL
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <!-- 1º SEMESTRE -->
+                                            <th colspan="4" class="text-center">NOTA DAS AVALIAÇÕES</th>
+                                            <th class="text-center">REC.</th>
+                                            <th class="text-center">MÉDIA 1º SEME.</th>
+
+                                            <!-- 2º SEMESTRE -->
+                                            <th colspan="4" class="text-center">NOTA DAS AVALIAÇÕES</th>
+                                            <th class="text-center">REC.</th>
+                                            <th class="text-center">MÉDIA 2º SEME.</th>
+
+                                            <!-- RESULTADO FINAL -->
+                                            <th class="text-center">PONTOS 1º E 2º SEME.</th>
+                                            <th class="text-center">MÉDIA 1º E 2º SEME.</th>
+                                            <th class="text-center">PROVA FINAL</th>
+                                            <th class="text-center">MÉDIA GERAL</th>
+                                        </tr>
+                                        <tr>
+                                            <!-- 1º SEMESTRE -->
+                                            <th class="text-center">1ª</th>
+                                            <th class="text-center">2ª</th>
+                                            <th class="text-center">3ª</th>
+                                            <th class="text-center">4ª</th>
+                                            <th class="text-center"></th>
+                                            <th class="text-center"></th>
+
+                                            <!-- 2º SEMESTRE -->
+                                            <th class="text-center">5ª</th>
+                                            <th class="text-center">6ª</th>
+                                            <th class="text-center">7ª</th>
+                                            <th class="text-center">8ª</th>
+                                            <th class="text-center"></th>
+                                            <th class="text-center"></th>
+
+                                            <!-- RESULTADO FINAL -->
+                                            <th class="text-center"></th>
+                                            <th class="text-center"></th>
+                                            <th class="text-center"></th>
+                                            <th class="text-center"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach($reportData as $subjectKey => $subjectData)
                                             <tr>
+                                                <!-- Nome da Disciplina -->
                                                 <td class="fw-bold">{{ $subjectData['name'] }}</td>
-                                                @foreach($periods as $periodKey => $periodName)
-                                                    @php
-                                                        $periodData = $subjectData['periods'][$periodKey] ?? null;
-                                                        $periodNotes = $periodData['notes'] ?? collect();
-                                                        $periodAverage = $periodData['average'] ?? null;
-                                                    @endphp
-                                                    <td class="text-center">
-                                                        @if($periodNotes->count() > 0)
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle border-0"
-                                                                        type="button"
-                                                                        data-bs-toggle="dropdown">
-                                                                    @if($periodAverage !== null)
-                                                                        <span class="fw-bold text-{{ $periodAverage >= 6 ? 'success' : ($periodAverage >= 4 ? 'warning' : 'danger') }}">
-                                                                            {{ number_format($periodAverage, 1, ',', '.') }}
-                                                                        </span>
-                                                                    @else
-                                                                        <span class="text-muted">-</span>
-                                                                    @endif
-                                                                </button>
-                                                                <ul class="dropdown-menu">
-                                                                    <li><h6 class="dropdown-header">Notas do {{ $periodName }}</h6></li>
-                                                                    @foreach($periodNotes as $note)
-                                                                        <li>
-                                                                            <a class="dropdown-item d-flex justify-content-between"
-                                                                               href="{{ route('notes.show', $note) }}">
-                                                                                <span>{{ $note->evaluation_type_name }}</span>
-                                                                                <span class="badge bg-{{ $note->percentage >= 60 ? 'success' : ($note->percentage >= 40 ? 'warning' : 'danger') }}">
-                                                                                    {{ number_format($note->grade, 1, ',', '.') }}
-                                                                                </span>
-                                                                            </a>
-                                                                        </li>
-                                                                    @endforeach
-                                                                    <li><hr class="dropdown-divider"></li>
-                                                                    <li class="text-center">
-                                                                        <strong>Média: {{ $periodAverage ? number_format($periodAverage, 1, ',', '.') : '-' }}</strong>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
+
+                                                <!-- 1º SEMESTRE -->
+                                                @php
+                                                    $semester1Notes = [];
+                                                    $semester1Recovery = null;
+                                                    $semester1Average = 0;
+
+                                                    // Buscar notas do 1º semestre
+                                                    foreach(['1_ava', '2_ava', '3_ava', '4_ava'] as $period) {
+                                                        $periodData = $subjectData['periods'][$period] ?? null;
+                                                        $semester1Notes[] = $periodData['average'] ?? 0;
+                                                    }
+
+                                                    // Buscar recuperação do 1º semestre
+                                                    $recoveryData = $subjectData['periods']['recuperacao_1_semestre'] ?? null;
+                                                    $semester1Recovery = $recoveryData['average'] ?? null;
+
+                                                    // Calcular média do 1º semestre (média das 4 AVAs)
+                                                    $validNotes = array_filter($semester1Notes, function($note) { return $note > 0; });
+                                                    if(!empty($validNotes)) {
+                                                        $semester1Average = array_sum($validNotes) / count($validNotes);
+                                                    }
+                                                    // Se houver recuperação e ela for maior que a média, usar a recuperação
+                                                    if($semester1Recovery !== null && $semester1Recovery > $semester1Average) {
+                                                        $semester1Average = $semester1Recovery;
+                                                    }
+                                                @endphp
+
+                                                @foreach($semester1Notes as $grade)
+                                                    <td class="text-center">{{ $grade > 0 ? number_format($grade, 1, ',', '.') : '-' }}</td>
                                                 @endforeach
-                                                <td class="text-center">
-                                                    @if($subjectData['average'] !== null)
-                                                        <span class="fw-bold fs-5 text-{{ $subjectData['average'] >= 6 ? 'success' : ($subjectData['average'] >= 4 ? 'warning' : 'danger') }}">
-                                                            {{ number_format($subjectData['average'], 1, ',', '.') }}
-                                                        </span>
-                                                    @else
-                                                        <span class="text-muted">-</span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-center">
-                                                    @php
-                                                        $status = $subjectData['status'];
-                                                        $statusClass = $status === 'aprovado' ? 'success' : ($status === 'recuperacao' ? 'warning' : 'danger');
-                                                    @endphp
-                                                    <span class="badge bg-{{ $statusClass }}">
-                                                        {{ ucfirst($status) }}
-                                                    </span>
-                                                </td>
+                                                <td class="text-center">{{ $semester1Recovery ? number_format($semester1Recovery, 1, ',', '.') : '-' }}</td>
+                                                <td class="text-center fw-bold">{{ $semester1Average > 0 ? number_format($semester1Average, 1, ',', '.') : '-' }}</td>
+
+                                                <!-- 2º SEMESTRE -->
+                                                @php
+                                                    $semester2Notes = [];
+                                                    $semester2Recovery = null;
+                                                    $semester2Average = 0;
+
+                                                    // Buscar notas do 2º semestre
+                                                    foreach(['5_ava', '6_ava', '7_ava', '8_ava'] as $period) {
+                                                        $periodData = $subjectData['periods'][$period] ?? null;
+                                                        $semester2Notes[] = $periodData['average'] ?? 0;
+                                                    }
+
+                                                    // Buscar recuperação do 2º semestre
+                                                    $recoveryData = $subjectData['periods']['recuperacao_2_semestre'] ?? null;
+                                                    $semester2Recovery = $recoveryData['average'] ?? null;
+
+                                                    // Calcular média do 2º semestre (média das 4 AVAs)
+                                                    $validNotes = array_filter($semester2Notes, function($note) { return $note > 0; });
+                                                    if(!empty($validNotes)) {
+                                                        $semester2Average = array_sum($validNotes) / count($validNotes);
+                                                    }
+                                                    // Se houver recuperação e ela for maior que a média, usar a recuperação
+                                                    if($semester2Recovery !== null && $semester2Recovery > $semester2Average) {
+                                                        $semester2Average = $semester2Recovery;
+                                                    }
+                                                @endphp
+
+                                                @foreach($semester2Notes as $grade)
+                                                    <td class="text-center">{{ $grade > 0 ? number_format($grade, 1, ',', '.') : '-' }}</td>
+                                                @endforeach
+                                                <td class="text-center">{{ $semester2Recovery ? number_format($semester2Recovery, 1, ',', '.') : '-' }}</td>
+                                                <td class="text-center fw-bold">{{ $semester2Average > 0 ? number_format($semester2Average, 1, ',', '.') : '-' }}</td>
+
+                                                <!-- RESULTADO FINAL -->
+                                                @php
+                                                    $totalPoints = array_sum($semester1Notes) + array_sum($semester2Notes);
+                                                    $finalAverage = 0;
+                                                    if($semester1Average > 0 && $semester2Average > 0) {
+                                                        $finalAverage = ($semester1Average + $semester2Average) / 2;
+                                                    } elseif($semester1Average > 0) {
+                                                        $finalAverage = $semester1Average;
+                                                    } elseif($semester2Average > 0) {
+                                                        $finalAverage = $semester2Average;
+                                                    }
+
+                                                    $finalExam = $subjectData['periods']['prova_final']['average'] ?? null;
+                                                    $overallAverage = $finalAverage;
+                                                    if($finalExam) {
+                                                        $overallAverage = ($finalAverage * 0.7) + ($finalExam * 0.3);
+                                                    }
+                                                @endphp
+
+                                                <td class="text-center">{{ $totalPoints > 0 ? number_format($totalPoints, 1, ',', '.') : '-' }}</td>
+                                                <td class="text-center fw-bold">{{ $finalAverage > 0 ? number_format($finalAverage, 1, ',', '.') : '-' }}</td>
+                                                <td class="text-center">{{ $finalExam ? number_format($finalExam, 1, ',', '.') : '-' }}</td>
+                                                <td class="text-center fw-bold text-primary">{{ $overallAverage > 0 ? number_format($overallAverage, 1, ',', '.') : '-' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
-                                    <tfoot class="table-secondary">
-                                        <tr>
-                                            <th class="fw-bold">MÉDIA GERAL</th>
-                                            @foreach($periods as $periodKey => $periodName)
-                                                <th class="text-center">
-                                                    @php
-                                                        $periodGeneralAverage = 0;
-                                                        $periodCount = 0;
-                                                        foreach($reportData as $subjectData) {
-                                                            if(isset($subjectData['periods'][$periodKey]['average']) && $subjectData['periods'][$periodKey]['average'] !== null) {
-                                                                $periodGeneralAverage += $subjectData['periods'][$periodKey]['average'];
-                                                                $periodCount++;
-                                                            }
-                                                        }
-                                                        $periodGeneralAverage = $periodCount > 0 ? $periodGeneralAverage / $periodCount : null;
-                                                    @endphp
-                                                    @if($periodGeneralAverage !== null)
-                                                        <span class="fw-bold text-{{ $periodGeneralAverage >= 6 ? 'success' : ($periodGeneralAverage >= 4 ? 'warning' : 'danger') }}">
-                                                            {{ number_format($periodGeneralAverage, 1, ',', '.') }}
-                                                        </span>
-                                                    @else
-                                                        <span class="text-muted">-</span>
-                                                    @endif
-                                                </th>
-                                            @endforeach
-                                            <th class="text-center">
-                                                <span class="fw-bold fs-4 text-{{ $generalAverage >= 6 ? 'success' : ($generalAverage >= 4 ? 'warning' : 'danger') }}">
-                                                    {{ number_format($generalAverage, 1, ',', '.') }}
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="badge bg-{{ $academicStatus === 'aprovado' ? 'success' : ($academicStatus === 'recuperacao' ? 'warning' : 'danger') }} fs-6">
-                                                    {{ ucfirst($academicStatus) }}
-                                                </span>
-                                            </th>
-                                        </tr>
-                                    </tfoot>
                                 </table>
                             </div>
 
                             <!-- Legenda -->
-                            <div class="row mt-4">
+                            <div class="row mt-3">
                                 <div class="col-12">
-                                    <div class="card bg-light">
+                                    <div class="card">
                                         <div class="card-body">
-                                            <h6 class="mb-3">Legenda de Avaliação:</h6>
+                                            <h6 class="card-title">Legenda de Notas</h6>
                                             <div class="row">
                                                 <div class="col-md-3">
                                                     <span class="badge bg-success me-2">Aprovado</span> ≥ 6,0
@@ -291,41 +321,41 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <!-- Estatísticas do Aluno -->
-                            <div class="row mt-4">
-                                <div class="col-md-4">
-                                    <div class="card text-center">
-                                        <div class="card-body">
-                                            <h5 class="card-title text-success">Disciplinas Aprovadas</h5>
-                                            <h2 class="text-success">
-                                                {{ collect($reportData)->where('status', 'aprovado')->count() }}
-                                            </h2>
-                                            <small class="text-muted">de {{ count($reportData) }} disciplinas</small>
-                                        </div>
-                                    </div>
+                    <!-- Estatísticas do Aluno -->
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-success">Disciplinas Aprovadas</h5>
+                                    <h2 class="text-success">
+                                        {{ collect($reportData)->where('status', 'aprovado')->count() }}
+                                    </h2>
+                                    <small class="text-muted">de {{ count($reportData) }} disciplinas</small>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card text-center">
-                                        <div class="card-body">
-                                            <h5 class="card-title text-warning">Em Recuperação</h5>
-                                            <h2 class="text-warning">
-                                                {{ collect($reportData)->where('status', 'recuperacao')->count() }}
-                                            </h2>
-                                            <small class="text-muted">disciplinas</small>
-                                        </div>
-                                    </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-warning">Em Recuperação</h5>
+                                    <h2 class="text-warning">
+                                        {{ collect($reportData)->where('status', 'recuperacao')->count() }}
+                                    </h2>
+                                    <small class="text-muted">disciplinas</small>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card text-center">
-                                        <div class="card-body">
-                                            <h5 class="card-title text-danger">Reprovadas</h5>
-                                            <h2 class="text-danger">
-                                                {{ collect($reportData)->where('status', 'reprovado')->count() }}
-                                            </h2>
-                                            <small class="text-muted">disciplinas</small>
-                                        </div>
-                                    </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">Reprovadas</h5>
+                                    <h2 class="text-danger">
+                                        {{ collect($reportData)->where('status', 'reprovado')->count() }}
+                                    </h2>
+                                    <small class="text-muted">disciplinas</small>
                                 </div>
                             </div>
                         </div>
@@ -336,10 +366,9 @@
     </div>
 </div>
 
-@push('styles')
 <style>
 @media print {
-    .btn, .dropdown-toggle {
+    .btn, .card-header .d-flex {
         display: none !important;
     }
 
@@ -348,36 +377,32 @@
         box-shadow: none !important;
     }
 
-    .card-header {
-        background-color: #6c757d !important;
-        -webkit-print-color-adjust: exact;
-    }
-
     .table {
-        font-size: 12px;
+        font-size: 10px !important;
     }
 
-    .badge {
-        -webkit-print-color-adjust: exact;
+    .table th, .table td {
+        padding: 2px !important;
     }
 }
 
-.dropdown-menu {
-    max-height: 300px;
-    overflow-y: auto;
+.table th {
+    background-color: #343a40 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.table-bordered th,
+.table-bordered td {
+    border: 1px solid #dee2e6 !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.fw-bold {
+    font-weight: bold !important;
 }
 </style>
-@endpush
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar tooltips se necessário
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-});
-</script>
-@endpush
 @endsection
